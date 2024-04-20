@@ -11,41 +11,22 @@ export default function Home() {
   const [expiryUnix, setExpiryUnix] = useState<number | undefined>(undefined);
   const [uri, setUri] = useState("");
 
-  const { ndk, keyPair: { privateKey, publicKey }, subscribeAndHandle } = useNdk();
+  const {
+    ndk,
+    keyPair: { privateKey, publicKey },
+    subscribeAndHandle,
+  } = useNdk();
   const { generateNwcUri, handleNwcRequest } = useNwc({
     ndk,
     privateKey,
-    publicKey
+    publicKey,
   });
 
   const handleGenerateUri = () => {
-    const uri = generateNwcUri({ budgetSat, expiryUnix })
+    const uri = generateNwcUri({ budgetSat, expiryUnix });
 
-    setUri(uri)
-  }
-
-  /**
-   * Create a new NDK subscription to `{ "kinds": [23194], "#p": <wallet_pubkey>}`
-   * Subscription will stay open
-   */
-  useEffect(() => {
-    if (!publicKey) {
-      return;
-    }
-   
-    // request: kind 23194, pTag = our pubkey
-    const filter: NDKFilter = {
-      kinds: [23194],
-      '#p': [publicKey],
-      since: Math.floor(Date.now() / 1000) // only look at events from after page loads
-    };
- 
-    console.log("SUBSCRIBING TO: ", filter)
- 
-    // subscribe to filter and pass incoming events to nwc request handler
-    // NOTE: closeOnEose: false will keep the subscription open
-    subscribeAndHandle(filter, handleNwcRequest, { closeOnEose: false })
-  }, [publicKey]) 
+    setUri(uri);
+  };
 
   return (
     <main
@@ -68,18 +49,30 @@ export default function Home() {
             <input
               type="date"
               value={expiryUnix}
-              onChange={(e) => setExpiryUnix(Math.floor(new Date(e.target.value).getTime() / 1000))}
+              onChange={(e) =>
+                setExpiryUnix(
+                  Math.floor(new Date(e.target.value).getTime() / 1000)
+                )
+              }
             />
           </div>
-          <button
-            className="btn btn-blue mb-3"
-            onClick={handleGenerateUri}>
+          <button className="btn btn-blue mb-3" onClick={handleGenerateUri}>
             Generate URI
           </button>
         </div>
 
         {/* Only show uri if it has a value */}
-        {uri && <p><strong>NWC URI:</strong> <span>{uri}</span></p>}
+        {uri && (
+          <p
+            onClick={() =>
+              navigator.clipboard
+                .writeText(uri)
+                .then(() => alert("NWC URI Copied"))
+            }
+          >
+            <strong>NWC URI:</strong> <span>{uri}</span>
+          </p>
+        )}
       </div>
     </main>
   );
